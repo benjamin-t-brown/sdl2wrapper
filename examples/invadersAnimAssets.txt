@@ -1,0 +1,68 @@
+#
+badShip
+loop
+badShip_0 20
+badShip_1 20
+
+#
+badShip_Damaged
+loop
+badShip_0 10
+badShip_2 10
+
+#
+badShip2
+loop
+badShip2_0 20
+badShip2_1 20
+
+#
+badShip2_Damaged
+loop
+badShip2_0 20
+badShip2_1 20
+
+#
+goodShip
+noloop
+goodShip_0 1
+
+#
+goodShip_Damaged
+loop
+goodShip_0 10
+goodShip_1 10
+
+#
+goodLazer
+loop
+goodLazer_0 5
+goodLazer_1 5
+
+#
+badLazer
+loop
+badLazer_0 5
+badLazer_1 5
+
+#
+badLazer2
+loop
+badLazer2_0 5
+badLazer2_1 5
+
+#
+healthPickup
+loop
+healthPickup_0 10
+healthPickup_1 10
+healthPickup_2 10
+
+#
+explosion
+loop
+explosion_0 7
+explosion_1 7
+explosion_2 7
+explosion_3 7
+explosion_4 7

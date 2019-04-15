@@ -1,5 +1,8 @@
 #include "Events.h"
 
+namespace SDL2Wrapper
+{
+
 struct EventRoute
 {
     std::function<void(int, int)> onmousedown;
@@ -160,4 +163,6 @@ void Events::keyup(int key)
     const std::string k = std::string(SDL_GetKeyName(key));
     keys[k] = false;
     route->onkeyup(k);
+}
+
 }

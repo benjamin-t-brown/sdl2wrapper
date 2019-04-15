@@ -8,6 +8,9 @@
 #include <functional>
 #include <iostream>
 
+namespace SDL2Wrapper
+{
+
 class EventRoute;
 
 class Events {
@@ -38,3 +41,4 @@ public:
 	void keydown(int key);
 	void keyup(int key);
 };
+}

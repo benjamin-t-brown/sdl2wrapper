@@ -29,7 +29,9 @@ class Window
 
 	std::string currentFontName;
 	int currentFontSize;
-	int deltaTime;
+	double deltaTime;
+	
+	static int instanceCount;
 
   public:
 	int width;
@@ -46,7 +48,8 @@ class Window
 	void setCurrentFont(const std::string& fontName, const int sz);
 	const std::string& getCurrentFontName() const;
 	const int getCurrentFontSize() const;
-	const int getDeltaTime() const;
+	const double getDeltaTime() const;
+	const double getFrameRatio() const;
 
 	void setAnimationFromDefinition(const std::string& name, Animation& anim) const;
 

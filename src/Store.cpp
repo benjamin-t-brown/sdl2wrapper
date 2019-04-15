@@ -12,10 +12,12 @@ std::map<std::string, std::unique_ptr<TTF_Font, SDL_Deleter>> Store::fonts;
 
 Store::Store()
 {
+	std::cout << "Store created" << std::endl;
 }
 
 Store::~Store()
 {
+	std::cout << "Clean STORE" << std::endl;
 }
 
 void Store::setRenderer(std::unique_ptr<SDL_Renderer, SDL_Deleter>& rendererA)

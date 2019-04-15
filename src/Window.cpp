@@ -4,14 +4,22 @@
 namespace SDL2Wrapper
 {
 
+int Window::instanceCount = 0;
+
 Window::Window(const std::string& title, int widthA, int heightA)
 	: currentFontSize(18), deltaTime(0), globalAlpha(255)
 {
+	Window::instanceCount++;
 	createWindow(title, widthA, heightA);
 }
 
 Window::~Window()
 {
+	// Window::instanceCount--;
+	// if (Window::instanceCount == 0)
+	// {
+	// 	SDL_Quit();
+	// }
 }
 
 void Window::createWindow(const std::string& title, const int w, const int h)
@@ -58,9 +66,14 @@ const int Window::getCurrentFontSize() const
 {
 	return currentFontSize;
 }
-const int Window::getDeltaTime() const
+const double Window::getDeltaTime() const
 {
 	return deltaTime;
+}
+const double Window::getFrameRatio() const
+{
+	double d = 16.666666 / deltaTime;
+	return d;
 }
 
 void Window::setAnimationFromDefinition(const std::string& name, Animation& anim) const
@@ -155,6 +168,7 @@ void Window::startRenderLoop(std::function<bool(void)> cb)
 	Uint64 now = SDL_GetPerformanceCounter();
 	Uint64 last = 0;
 	double freq = 0;
+	bool firstLoop = true;
 
 	while (loop)
 	{
@@ -164,7 +178,14 @@ void Window::startRenderLoop(std::function<bool(void)> cb)
 		}
 		last = now;
 		now = SDL_GetPerformanceCounter();
-		deltaTime = ((now - last) * 1000 / (double)SDL_GetPerformanceFrequency());
+		if (firstLoop)
+		{
+			deltaTime = 16.6666;
+		}
+		else
+		{
+			deltaTime = ((now - last) * 1000 / (double)SDL_GetPerformanceFrequency());
+		}
 
 		SDL_Event e;
 		while (SDL_PollEvent(&e) != 0)
@@ -209,6 +230,7 @@ void Window::startRenderLoop(std::function<bool(void)> cb)
 		SDL_RenderClear(renderer.get());
 		loop = cb();
 		SDL_RenderPresent(renderer.get());
+		firstLoop = false;
 	}
 }
 } // namespace SDL2Wrapper

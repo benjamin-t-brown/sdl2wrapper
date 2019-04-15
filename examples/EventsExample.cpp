@@ -17,7 +17,8 @@ void handleMouseMove(int x, int y)
 	std::cout << "Mousemove: " << x << "," << y << std::endl;
 }
 
-void handleKeyDown(const std::string& key) {
+void handleKeyDown(const std::string& key)
+{
 	std::cout << "Keydown: " << key << std::endl;
 }
 
@@ -30,14 +31,14 @@ int main(int argc, char* argv[])
 		SDL2Wrapper::Window window("Events Example", 800, 600);
 		WindowInterface.w = &window;
 
-		SDL2Wrapper::Store::createTexture("red-box", "red-box.png");
+		SDL2Wrapper::Store::createTexture("a", "red-box.png");
 
-		Events& events = window.getEvents();
+		SDL2Wrapper::Events& events = window.getEvents();
 		events.setMouseEvent("mousemove", handleMouseMove);
 		events.setKeyboardEvent("keydown", handleKeyDown);
 
 		window.startRenderLoop([&]() {
-			window.drawSprite("red-box", events.mouseX, events.mouseY, true);
+			window.drawSprite("a", events.mouseX, events.mouseY, true);
 			return true;
 		});
 	}

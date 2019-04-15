@@ -7,8 +7,8 @@ badShip_1 20
 #
 badShip_Damaged
 loop
-badShip_0 10
-badShip_2 10
+badShip_0 4
+badShip_2 4
 
 #
 badShip2
@@ -19,8 +19,8 @@ badShip2_1 20
 #
 badShip2_Damaged
 loop
-badShip2_0 20
-badShip2_1 20
+badShip2_0 4
+badShip2_1 4
 
 #
 goodShip
@@ -30,8 +30,8 @@ goodShip_0 1
 #
 goodShip_Damaged
 loop
-goodShip_0 10
-goodShip_1 10
+goodShip_0 4
+goodShip_1 4
 
 #
 goodLazer
@@ -60,7 +60,7 @@ healthPickup_2 10
 
 #
 explosion
-loop
+noloop
 explosion_0 7
 explosion_1 7
 explosion_2 7

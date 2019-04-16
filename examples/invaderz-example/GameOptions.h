@@ -8,7 +8,7 @@ static struct
 	const int playerSpeed = 3;
 	const int playerProjDamage = 1;
 	const int playerProjSpeed = 5;
-	const int playerFireCooldown = 1;
+	const int playerFireCooldown = 20;
 	const int playerShipHP = 20;
 	const int enemyShipHP = 2;
 	const int enemyFireRate = 3000;
@@ -17,6 +17,7 @@ static struct
 	const int enemyProjSpeed = 3;
 	const int enemyProjDamage2 = 2;
 	const int enemyProjSpeed2 = 5;
+	const int shipCollideDamage = 3;
 	const int pointsPerDestroyedShip = 100;
 	const int pointsPerDestroyedShip2 = 1000;
 	const int pointsLostPerShot = 1;

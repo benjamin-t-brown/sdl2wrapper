@@ -11,8 +11,9 @@ class Ship : public Actor
 	int allegiance;
 	int hp;
 	Ship(Game& gameA, const std::string& spriteBaseA, const int allegianceA, const int hp);
-	virtual ~Ship();
+	~Ship();
 	bool isExploding() const;
 	void onCollision(Projectile& proj);
+	void onCollision(Ship& ship);
 	void update();
 };

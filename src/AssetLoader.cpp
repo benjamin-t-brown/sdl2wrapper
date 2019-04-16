@@ -163,12 +163,12 @@ void loadAssetsFromFile<Sprite>(const std::string& path)
 				}
 				else if (arr[0] == "SpriteList")
 				{
-					std::unique_ptr<Sprite>& image = Store::getSprite(lastPicture);
+					Sprite& image = Store::getSprite(lastPicture);
 					std::string name = arr[1];
 					int n = std::stoi(arr[2]) + lastSpriteInd;
 					int w = std::stoi(arr[3]);
 					int h = std::stoi(arr[4]);
-					int num_x = image->cw / w;
+					int num_x = image.cw / w;
 					int ctr = 0;
 					for (int i = lastSpriteInd; i < n; i++)
 					{
@@ -221,7 +221,7 @@ void loadAssetsFromFile<Animation>(const std::string& path)
 			}
 			else if (line.size())
 			{
-				std::unique_ptr<AnimationDefinition>& anim = Store::getAnimationDefinition(animName);
+				AnimationDefinition& anim = Store::getAnimationDefinition(animName);
 				std::stringstream ss;
 				ss << line;
 				std::string strName;
@@ -240,7 +240,7 @@ void loadAssetsFromFile<Animation>(const std::string& path)
 					std::cout << " FROM: '" << line << "'" << std::endl;
 					std::cout << " LINE: " << getLineFromStream(ifs) << std::endl;
 				}
-				anim->addSprite(strName, frames);
+				anim.addSprite(strName, frames);
 			}
 		}
 	}

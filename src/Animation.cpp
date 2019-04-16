@@ -16,20 +16,28 @@ Animation::Animation(const std::string& nameA, const bool loopA)
 }
 
 Animation::Animation(const Animation& a)
-	: name(a.name), sprite(a.sprite), spriteIndex(a.spriteIndex), frame(a.frame), maxFrames(a.maxFrames), loop(a.loop), sprites(a.sprites)
+	: name(a.name), sprite(a.sprite), spriteIndex(a.spriteIndex), frame(a.frame), maxFrames(a.maxFrames), loop(a.loop)
 {
+	for (auto& pair: a.sprites)
+	{
+		addSprite(pair.first, pair.second);
+	}
 }
 
 Animation& Animation::operator=(const Animation& a)
 {
 	if (this != &a)
 	{
+		sprites.clear();
+		for (auto& pair: a.sprites)
+		{
+			addSprite(pair.first, pair.second);
+		}
 		name = a.name;
 		sprite = a.sprite;
 		spriteIndex = a.spriteIndex;
 		frame = a.frame;
 		maxFrames = a.maxFrames;
-		sprites = a.sprites;
 		loop = a.loop;
 	}
 	return *this;

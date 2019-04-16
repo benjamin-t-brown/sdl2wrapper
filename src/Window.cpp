@@ -5,9 +5,14 @@ namespace SDL2Wrapper
 {
 
 int Window::instanceCount = 0;
+const double Window::targetFrameMS = 16.66666;
 
+Window::Window() : events(*this)
+{
+
+}
 Window::Window(const std::string& title, int widthA, int heightA)
-	: currentFontSize(18), deltaTime(0), globalAlpha(255)
+	: events(*this), currentFontSize(18), deltaTime(0), globalAlpha(255)
 {
 	Window::instanceCount++;
 	createWindow(title, widthA, heightA);
@@ -15,16 +20,20 @@ Window::Window(const std::string& title, int widthA, int heightA)
 
 Window::~Window()
 {
-	// Window::instanceCount--;
-	// if (Window::instanceCount == 0)
-	// {
-	// 	SDL_Quit();
-	// }
+	Window::instanceCount--;
+	if (Window::instanceCount == 0)
+	{
+		Store::clear();
+		IMG_Quit();
+		TTF_Quit();
+		SDL_Quit();
+	}
 }
 
 void Window::createWindow(const std::string& title, const int w, const int h)
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
+	//IMG_Init(IMG_INIT_PNG);
 	colorkey = 0x00FFFFFF;
 	width = w;
 	height = h;
@@ -72,13 +81,13 @@ const double Window::getDeltaTime() const
 }
 const double Window::getFrameRatio() const
 {
-	double d = 16.666666 / deltaTime;
+	double d = Window::targetFrameMS / deltaTime;
 	return d;
 }
 
 void Window::setAnimationFromDefinition(const std::string& name, Animation& anim) const
 {
-	anim = static_cast<SDL2Wrapper::Animation>(*SDL2Wrapper::Store::getAnimationDefinition(name));
+	anim = Animation(Store::getAnimationDefinition(name));
 }
 
 const SDL_Color Window::makeColor(Uint8 r, Uint8 g, Uint8 b) const
@@ -87,7 +96,7 @@ const SDL_Color Window::makeColor(Uint8 r, Uint8 g, Uint8 b) const
 	return c;
 }
 
-std::unique_ptr<SDL_Texture, SDL_Deleter>& Window::getTextTexture(const std::string& text, const int x, const int y, const int sz, const SDL_Color& color)
+SDL_Texture* Window::getTextTexture(const std::string& text, const int x, const int y, const int sz, const SDL_Color& color)
 {
 	if (!currentFontName.size())
 	{
@@ -95,15 +104,15 @@ std::unique_ptr<SDL_Texture, SDL_Deleter>& Window::getTextTexture(const std::str
 	}
 
 	const std::string key = text + std::to_string(sz) + std::to_string(color.r) + std::to_string(color.g) + std::to_string(color.b);
-	std::unique_ptr<SDL_Texture, SDL_Deleter>& tex = Store::getTextTexture(key);
+	SDL_Texture* tex = Store::getTextTexture(key);
 	if (tex)
 	{
 		return tex;
 	}
 	else
 	{
-		std::unique_ptr<TTF_Font, SDL_Deleter>& font = Store::getFont(currentFontName, sz);
-		SDL_Surface* surf = TTF_RenderText_Solid(font.get(), text.c_str(), color);
+		TTF_Font* font = Store::getFont(currentFontName, sz);
+		SDL_Surface* surf = TTF_RenderText_Solid(font, text.c_str(), color);
 		SDL_Texture* texPtr = SDL_CreateTextureFromSurface(renderer.get(), surf);
 		SDL_FreeSurface(surf);
 		Store::storeTextTexture(key, texPtr);
@@ -113,11 +122,11 @@ std::unique_ptr<SDL_Texture, SDL_Deleter>& Window::getTextTexture(const std::str
 
 void Window::drawSprite(const std::string& name, const int x, const int y, const bool centered)
 {
-	std::unique_ptr<Sprite>& sprite = Store::getSprite(name);
-	SDL_Texture* tex = sprite->image.get();
+	Sprite& sprite = Store::getSprite(name);
+	SDL_Texture* tex = sprite.image;
 	SDL_SetTextureAlphaMod(tex, globalAlpha);
-	SDL_Rect pos = {x + (centered ? -sprite->cw / 2 : 0), y + (centered ? -sprite->ch / 2 : 0), sprite->cw, sprite->ch};
-	SDL_Rect clip = {sprite->cx, sprite->cy, sprite->cw, sprite->ch};
+	SDL_Rect pos = {x + (centered ? -sprite.cw / 2 : 0), y + (centered ? -sprite.ch / 2 : 0), sprite.cw, sprite.ch};
+	SDL_Rect clip = {sprite.cx, sprite.cy, sprite.cw, sprite.ch};
 	SDL_SetRenderDrawBlendMode(renderer.get(), SDL_BLENDMODE_BLEND);
 	SDL_RenderCopy(renderer.get(), tex, &clip, &pos);
 }
@@ -140,26 +149,26 @@ void Window::drawAnimation(Animation& anim, const int x, const int y, const bool
 
 void Window::drawText(const std::string& text, const int x, const int y, const SDL_Color& color)
 {
-	std::unique_ptr<SDL_Texture, SDL_Deleter>& tex = getTextTexture(text, x, y, currentFontSize, color);
+	SDL_Texture* tex = getTextTexture(text, x, y, currentFontSize, color);
 
 	int w, h;
-	SDL_QueryTexture(tex.get(), NULL, NULL, &(w), &(h));
-	SDL_SetTextureAlphaMod(tex.get(), globalAlpha);
+	SDL_QueryTexture(tex, NULL, NULL, &(w), &(h));
+	SDL_SetTextureAlphaMod(tex, globalAlpha);
 	SDL_Rect pos = {x, y, w, h};
 	SDL_SetRenderDrawBlendMode(renderer.get(), SDL_BLENDMODE_BLEND);
-	SDL_RenderCopy(renderer.get(), tex.get(), NULL, &pos);
+	SDL_RenderCopy(renderer.get(), tex, NULL, &pos);
 }
 
 void Window::drawTextCentered(const std::string& text, const int x, const int y, const SDL_Color& color)
 {
-	std::unique_ptr<SDL_Texture, SDL_Deleter>& tex = getTextTexture(text, x, y, currentFontSize, color);
+	SDL_Texture* tex = getTextTexture(text, x, y, currentFontSize, color);
 
 	int w, h;
-	SDL_QueryTexture(tex.get(), NULL, NULL, &(w), &(h));
-	SDL_SetTextureAlphaMod(tex.get(), globalAlpha);
+	SDL_QueryTexture(tex, NULL, NULL, &(w), &(h));
+	SDL_SetTextureAlphaMod(tex, globalAlpha);
 	SDL_Rect pos = {x - w / 2, y - h / 2, w, h};
 	SDL_SetRenderDrawBlendMode(renderer.get(), SDL_BLENDMODE_BLEND);
-	SDL_RenderCopy(renderer.get(), tex.get(), NULL, &pos);
+	SDL_RenderCopy(renderer.get(), tex, NULL, &pos);
 }
 
 void Window::startRenderLoop(std::function<bool(void)> cb)

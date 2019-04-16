@@ -2,27 +2,24 @@
 
 namespace SDL2Wrapper
 {
-std::unique_ptr<SDL_Texture, SDL_Deleter> nullTexture;
-std::unique_ptr<SDL_Renderer, SDL_Deleter>* Store::rendererPtr = nullptr;
-std::map<std::string, std::unique_ptr<SDL_Texture, SDL_Deleter>> Store::textures;
-std::map<std::string, std::unique_ptr<SDL_Texture, SDL_Deleter>> Store::textTextures;
-std::map<std::string, std::unique_ptr<Sprite>> Store::sprites;
-std::map<std::string, std::unique_ptr<AnimationDefinition>> Store::anims;
-std::map<std::string, std::unique_ptr<TTF_Font, SDL_Deleter>> Store::fonts;
+SDL_Renderer* Store::rendererPtr = nullptr;
+std::unordered_map<std::string, std::unique_ptr<SDL_Texture, SDL_Deleter>> Store::textures;
+std::unordered_map<std::string, std::unique_ptr<SDL_Texture, SDL_Deleter>> Store::textTextures;
+std::unordered_map<std::string, std::unique_ptr<Sprite>> Store::sprites;
+std::unordered_map<std::string, std::unique_ptr<AnimationDefinition>> Store::anims;
+std::unordered_map<std::string, std::unique_ptr<TTF_Font, SDL_Deleter>> Store::fonts;
 
 Store::Store()
 {
-	std::cout << "Store created" << std::endl;
 }
 
 Store::~Store()
 {
-	std::cout << "Clean STORE" << std::endl;
 }
 
 void Store::setRenderer(std::unique_ptr<SDL_Renderer, SDL_Deleter>& rendererA)
 {
-	Store::rendererPtr = &(rendererA);
+	Store::rendererPtr = rendererA.get();
 }
 
 void Store::storeTextTexture(const std::string& name, SDL_Texture* tex)
@@ -32,8 +29,9 @@ void Store::storeTextTexture(const std::string& name, SDL_Texture* tex)
 
 void Store::createTexture(const std::string& name, const std::string& path)
 {
-	if (Store::rendererPtr == nullptr) {
-		throw std::string("[SDL2Wrapper] ERROR Cannot create textures without a renderer.");
+	if (Store::rendererPtr == nullptr)
+	{
+		throw std::string("[SDL2Wrapper] ERROR Cannot create textures without a renderer (initialized in Window class).");
 	}
 
 	SDL_Texture* tex = nullptr;
@@ -43,14 +41,14 @@ void Store::createTexture(const std::string& name, const std::string& path)
 
 	if (loadedImage != nullptr)
 	{
-		tex = SDL_CreateTextureFromSurface(Store::rendererPtr->get(), loadedImage);
+		tex = SDL_CreateTextureFromSurface(Store::rendererPtr, loadedImage);
 		if (tex == nullptr)
 		{
 			std::cout << "[SDL2Wrapper] WARNING Tried to create texture image without creating a screen." << std::endl;
 			return;
 		}
 		textures[name] = std::unique_ptr<SDL_Texture, SDL_Deleter>(tex, SDL_Deleter());
-		createSprite(name, textures[name]);
+		createSprite(name, textures[name].get());
 		SDL_FreeSurface(loadedImage);
 	}
 	else
@@ -61,7 +59,7 @@ void Store::createTexture(const std::string& name, const std::string& path)
 
 void Store::createFont(const std::string& name, const std::string& path)
 {
-	if (TTF_Init() == -1)
+	if (!TTF_WasInit() && TTF_Init() == -1)
 	{
 		throw std::string("[SDL2Wrapper] ERROR Failed to initialize TTF : " + std::string(SDL_GetError()));
 	}
@@ -82,10 +80,10 @@ void Store::createFont(const std::string& name, const std::string& path)
 	}
 }
 
-void Store::createSprite(const std::string& name, std::unique_ptr<SDL_Texture, SDL_Deleter>& tex)
+void Store::createSprite(const std::string& name, SDL_Texture* tex)
 {
 	int width, height;
-	SDL_QueryTexture(tex.get(), nullptr, nullptr, &width, &height);
+	SDL_QueryTexture(tex, nullptr, nullptr, &width, &height);
 	if (sprites.find(name) == sprites.end())
 	{
 		sprites[name] = std::make_unique<Sprite>(name, 0, 0, width, height, tex);
@@ -98,12 +96,12 @@ void Store::createSprite(const std::string& name, std::unique_ptr<SDL_Texture, S
 
 void Store::createSprite(const std::string& name, const std::string& textureName, const int x, const int y, const int w, const int h)
 {
-	std::unique_ptr<SDL_Texture, SDL_Deleter>& tex = getTexture(textureName);
-	SDL_SetTextureBlendMode(tex.get(), SDL_BLENDMODE_BLEND);
+	SDL_Texture* tex = getTexture(textureName);
+	SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
 	sprites[name] = std::make_unique<Sprite>(name, x, y, w, h, tex);
 }
 
-std::unique_ptr<AnimationDefinition>& Store::createAnimationDefinition(const std::string& name, const bool loop)
+AnimationDefinition& Store::createAnimationDefinition(const std::string& name, const bool loop)
 {
 	if (anims.find(name) == anims.end())
 	{
@@ -113,7 +111,7 @@ std::unique_ptr<AnimationDefinition>& Store::createAnimationDefinition(const std
 	{
 		std::cout << "[SDL2Wrapper] WARNING Cannot create new anim, it already exists: '" + name + "'" << std::endl;
 	}
-	return anims[name];
+	return *anims[name];
 }
 
 void Store::logSprites()
@@ -142,12 +140,12 @@ void Store::logFonts()
 	}
 }
 
-std::unique_ptr<SDL_Texture, SDL_Deleter>& Store::getTexture(const std::string& name)
+SDL_Texture* Store::getTexture(const std::string& name)
 {
 	auto pair = textures.find(name);
 	if (pair != textures.end())
 	{
-		return pair->second;
+		return pair->second.get();
 	}
 	else
 	{
@@ -155,25 +153,25 @@ std::unique_ptr<SDL_Texture, SDL_Deleter>& Store::getTexture(const std::string& 
 	}
 }
 
-std::unique_ptr<SDL_Texture, SDL_Deleter>& Store::getTextTexture(const std::string& key)
+SDL_Texture* Store::getTextTexture(const std::string& key)
 {
 	auto pair = textTextures.find(key);
 	if (pair != textTextures.end())
 	{
-		return pair->second;
+		return pair->second.get();
 	}
 	else
 	{
-		return nullTexture;
-	}	
+		return nullptr;
+	}
 }
 
-std::unique_ptr<Sprite>& Store::getSprite(const std::string& name)
+Sprite& Store::getSprite(const std::string& name)
 {
 	auto pair = sprites.find(name);
 	if (pair != sprites.end())
 	{
-		return pair->second;
+		return *pair->second;
 	}
 	else
 	{
@@ -182,12 +180,12 @@ std::unique_ptr<Sprite>& Store::getSprite(const std::string& name)
 	}
 }
 
-std::unique_ptr<AnimationDefinition>& Store::getAnimationDefinition(const std::string& name)
+AnimationDefinition& Store::getAnimationDefinition(const std::string& name)
 {
 	auto pair = anims.find(name);
 	if (pair != anims.end())
 	{
-		return pair->second;
+		return *pair->second;
 	}
 	else
 	{
@@ -195,18 +193,27 @@ std::unique_ptr<AnimationDefinition>& Store::getAnimationDefinition(const std::s
 	}
 }
 
-std::unique_ptr<TTF_Font, SDL_Deleter>& Store::getFont(const std::string& name, const int sz, const bool isOutline)
+TTF_Font* Store::getFont(const std::string& name, const int sz, const bool isOutline)
 {
 	const std::string key = name + std::to_string(sz) + (isOutline ? "o" : "");
 	auto pair = fonts.find(key);
 	if (pair != fonts.end())
 	{
-		return pair->second;
+		return pair->second.get();
 	}
 	else
 	{
 		throw std::string("[SDL2Wrapper] ERROR Cannot get Font '" + key + "' because it has not been created.");
 	}
+}
+
+void Store::clear()
+{
+	textures.clear();
+	textTextures.clear();
+	sprites.clear();
+	anims.clear();
+	fonts.clear();
 }
 
 } // namespace SDL2Wrapper

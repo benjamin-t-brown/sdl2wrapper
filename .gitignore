@@ -3,3 +3,6 @@ lib/*
 *.a
 *.o
 *.exe
+.gitignore~
+examples/EventsExample
+examples/SimpleExample

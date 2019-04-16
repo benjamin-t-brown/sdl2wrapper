@@ -2,6 +2,8 @@
 
 #include "SDL2Wrapper.h"
 
+#include <unordered_map>
+
 class Game;
 class Projectile;
 class Ship;
@@ -12,6 +14,7 @@ class Actor
 	Game& game;
 	std::string animState;
 	bool removeFlag;
+	std::vector<std::unique_ptr<SDL2Wrapper::Timer>> timers;
 
   public:
 	std::string spriteBase;
@@ -20,7 +23,7 @@ class Actor
 	double vx;
 	double vy;
 	float r;
-	std::map<std::string, SDL2Wrapper::Animation> anims;
+	std::unordered_map<std::string, SDL2Wrapper::Animation> anims;
 	Actor(Game& gameA, const std::string& spriteBaseA);
 	virtual ~Actor();
 	void set(const double xA, const double yA);
@@ -28,6 +31,7 @@ class Actor
 	void setVx(const double vxA);
 	void setVy(const double vyA);
 	void setAnimState(const std::string& state);
+	void addBoolTimer(const int maxFrames, bool& ref);
 	void remove();
 	const bool shouldRemove() const;
 

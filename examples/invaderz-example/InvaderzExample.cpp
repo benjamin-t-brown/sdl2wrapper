@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 	{
 		std::cout << e;
 	}
-	SDL_Quit();
+
 	std::cout << "end." << std::endl;
 	return 0;
 }

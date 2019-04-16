@@ -23,8 +23,8 @@ struct EventRoute
     }
 };
 
-Events::Events()
-    : isMouseDown(false), isRightMouseDown(false), mouseX(0), mouseY(0), mouseDownX(0), mouseDownY(0)
+Events::Events(Window& windowA)
+    : window(windowA), shouldPushRoute(false), shouldPopRoute(false), isMouseDown(false), isRightMouseDown(false), mouseX(0), mouseY(0), mouseDownX(0), mouseDownY(0)
 {
     pushRoute();
 }
@@ -54,7 +54,10 @@ void Events::pushRoute()
 {
     routes.push(std::make_unique<EventRoute>());
 }
-
+void Events::pushRouteNextTick()
+{
+    shouldPushRoute = true;
+}
 void Events::popRoute()
 {
     if (routes.size() >= 2)
@@ -66,6 +69,11 @@ void Events::popRoute()
         routes.pop();
         pushRoute();
     }
+}
+
+void Events::popRouteNextTick()
+{
+    shouldPopRoute = true;
 }
 
 void Events::setMouseEvent(const std::string& name, std::function<void(int, int)> cb)
@@ -163,6 +171,19 @@ void Events::keyup(int key)
     const std::string k = std::string(SDL_GetKeyName(key));
     keys[k] = false;
     route->onkeyup(k);
+}
+void Events::update()
+{
+    if (shouldPushRoute)
+    {
+        shouldPushRoute = false;
+        pushRoute();
+    }
+    if (shouldPopRoute)
+    {
+        shouldPopRoute = false;
+        popRoute();
+    }
 }
 
 }

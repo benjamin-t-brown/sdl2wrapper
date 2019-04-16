@@ -1,9 +1,8 @@
 #include "Game.h"
-#include "GameOptions.h"
 #include "Actor.h"
-#include "Ship.h"
+#include "GameOptions.h"
 #include "Projectile.h"
-#include "Timer.h"
+#include "Ship.h"
 
 #include <algorithm>
 #include <cctype>
@@ -15,7 +14,7 @@ const float distance(const int x1, const int y1, const int x2, const int y2)
 }
 
 Game::Game(SDL2Wrapper::Window& windowA)
-	: window(windowA), width(windowA.width), height(windowA.height), score(0), playerMayFire(true), enemyFireRate(GameOptions.enemyFireRate)
+	: shouldDrawMenu(true), shouldExit(false), score(0), window(windowA), width(GameOptions.width), height(GameOptions.height), playerMayFire(true), enemyFireRate(GameOptions.enemyFireRate)
 {
 	SDL2Wrapper::Store::createFont("default", "assets/monofonto.ttf");
 	window.setCurrentFont("default", 18);
@@ -29,17 +28,18 @@ Game::Game(SDL2Wrapper::Window& windowA)
 	playerShip = std::make_unique<Ship>(*this, "goodShip", 0, 20);
 	initPlayer();
 	initWorld();
+	enableMenu();
 }
 
 Game::~Game()
 {
-	std::cout << "Clean game." << std::endl;
 }
 
 void Game::initPlayer()
 {
 	playerShip->set(width / 2, height - GameOptions.spriteSize * 2);
 	playerShip->hp = GameOptions.playerShipHP;
+	playerShip->setAnimState("default");
 }
 
 void Game::initWorld()
@@ -58,12 +58,23 @@ void Game::initWorld()
 	}
 
 	enemyShips.clear();
-	int x = 50 + GameOptions.spriteSize * 2 * GameOptions.spriteSize;
-	int y = 50 + (GameOptions.spriteSize + GameOptions.spriteSize / 2);
-	enemyShips.push_back(std::make_unique<Ship>(*this, "badShip", 1, GameOptions.enemyShipHP));
-	std::unique_ptr<Ship>& ship = enemyShips.back();
-	ship->set(static_cast<double>(x), static_cast<double>(y));
-	ship->setV(2, 1);
+	spawnEnemyShips(2);
+}
+
+void Game::enableMenu()
+{
+	shouldDrawMenu = true;
+	SDL2Wrapper::Events& events = window.getEvents();
+	events.pushRoute();
+
+	events.setKeyboardEvent("keydown", std::bind(&Game::handleKeyMenu, this, std::placeholders::_1));
+}
+
+void Game::disableMenu()
+{
+	shouldDrawMenu = false;
+	SDL2Wrapper::Events& events = window.getEvents();
+	events.popRouteNextTick();
 }
 
 void Game::spawnEnemyShips(const int amount)
@@ -113,13 +124,12 @@ void Game::addProjectile(const std::string& type, const int x, const int y)
 	}
 }
 
-void Game::addBoolTimer(const int maxFrames, bool& ref)
-{
-	timers.push_back(std::make_unique<BoolTimer>(maxFrames, ref));
-}
-
 void Game::modifyScore(const int value)
 {
+	if (shouldDrawMenu)
+	{
+		return;
+	}
 	score += value;
 	if (score < 0)
 	{
@@ -159,9 +169,23 @@ void Game::handleKeyUpdate()
 		{
 			playerMayFire = false;
 			addProjectile("good", playerShip->x, playerShip->y - GameOptions.spriteSize / 2);
-			addBoolTimer(GameOptions.playerFireCooldown, playerMayFire);
+			playerShip->addBoolTimer(GameOptions.playerFireCooldown, playerMayFire);
 			modifyScore(-GameOptions.pointsLostPerShot);
 		}
+	}
+}
+
+void Game::handleKeyMenu(const std::string& key)
+{
+	if (key == "Return")
+	{
+		initPlayer();
+		initWorld();
+		disableMenu();
+	}
+	if (key == "Escape")
+	{
+		shouldExit = true;
 	}
 }
 
@@ -177,14 +201,61 @@ bool Game::collidesWith(Actor& a, Actor& b)
 
 void Game::checkCollisions(Ship& a)
 {
+	if (&a == playerShip.get())
+	{
+		for (auto it = enemyShips.begin(); it != enemyShips.end(); ++it)
+		{
+			Ship& ship = **it;
+			if (ship.isExploding())
+			{
+				continue;
+			}
+			if (collidesWith(a, ship))
+			{
+				a.onCollision(ship);
+				ship.onCollision(a);
+				break;
+			}
+		}
+	}
+
 	for (auto it = projectiles.begin(); it != projectiles.end(); ++it)
 	{
-		std::unique_ptr<Projectile>& act = *it;
-		if (collidesWith(a, *act))
+		Projectile& proj = **it;
+		if (collidesWith(a, proj))
 		{
-			a.onCollision(*act);
-			act->onCollision(a);
+			a.onCollision(proj);
+			proj.onCollision(a);
 		}
+	}
+}
+
+void Game::checkGameOver()
+{
+	if (playerShip->isExploding())
+	{
+		enableMenu();
+	}
+}
+
+void Game::drawMenu()
+{
+	int titleX = GameOptions.width / 2;
+	int titleY = GameOptions.height / 2;
+	window.setCurrentFont("default", 72);
+	window.drawTextCentered("Invaderz", titleX, titleY, window.makeColor(255, 255, 255));
+
+	int startTextX = GameOptions.width / 2;
+	int startTextY = GameOptions.height - GameOptions.height / 4;
+	window.setCurrentFont("default", 36);
+	window.drawTextCentered("Press 'Enter' to start", startTextX, startTextY, window.makeColor(255, 255, 255));
+
+	if (score)
+	{
+		int scoreTextX = GameOptions.width / 2;
+		int scoreTextY = GameOptions.height - GameOptions.height / 3;
+		window.setCurrentFont("default", 18);
+		window.drawTextCentered("Last Score: " + std::to_string(score), scoreTextX, scoreTextY, window.makeColor(255, 255, 255));
 	}
 }
 
@@ -202,7 +273,7 @@ void Game::drawUI()
 	window.drawText("Score: " + std::to_string(score), hpX - 24, 32, window.makeColor(255, 255, 255));
 }
 
-bool Game::loop()
+void Game::drawStars()
 {
 	if (background.size())
 	{
@@ -211,27 +282,16 @@ bool Game::loop()
 			for (int j = 0; j < width / GameOptions.spriteSize; ++j)
 			{
 				int ind = i * width / GameOptions.spriteSize + j;
-				window.drawSprite("starsBg_" + std::to_string(background[ind]), j * GameOptions.spriteSize, i * GameOptions.spriteSize, false);
+				int x = j * GameOptions.spriteSize;
+				int y = i * GameOptions.spriteSize;
+				window.drawSprite("starsBg_" + std::to_string(background[ind]), x, y, false);
 			}
 		}
 	}
+}
 
-	handleKeyUpdate();
-
-	for (auto it = timers.begin(); it != timers.end(); ++it)
-	{
-		std::unique_ptr<BoolTimer>& timer = *it;
-		timer->update();
-		if (timer->shouldRemove())
-		{
-			timers.erase(it--);
-		}
-	}
-
-	playerShip->update();
-	checkCollisions(*playerShip);
-	playerShip->draw();
-
+void Game::drawEnemyShips()
+{
 	unsigned int sz = enemyShips.size();
 	for (unsigned int i = 0; i < sz; i++)
 	{
@@ -253,21 +313,10 @@ bool Game::loop()
 			ship.setVy(-ship.vy);
 		}
 	}
+}
 
-	enemyShips.erase(std::remove_if(enemyShips.begin(), enemyShips.end(), [](const std::unique_ptr<Ship>& ship) {
-		return ship->shouldRemove();
-	}), enemyShips.end());
-
-	for (auto it = enemyShips.begin(); it != enemyShips.end(); ++it)
-	{
-		Ship& ship = **it;
-		if (ship.shouldRemove())
-		{
-			enemyShips.erase(it--);
-			std::cout << "NEW LENGTH " << enemyShips.size() << std::endl;
-		}		
-	}
-
+void Game::drawProjectiles()
+{
 	for (auto it = projectiles.begin(); it != projectiles.end(); ++it)
 	{
 		Projectile& proj = **it;
@@ -281,8 +330,47 @@ bool Game::loop()
 			proj.draw();
 		}
 	}
+}
 
-	//drawUI();
+bool Game::menuLoop()
+{
+	drawStars();
+	drawEnemyShips();
+	drawMenu();
+	return !shouldExit;
+}
 
-	return true;
+bool Game::gameLoop()
+{
+	drawStars();
+	handleKeyUpdate();
+
+	playerShip->update();
+	checkCollisions(*playerShip);
+	playerShip->draw();
+
+	drawEnemyShips();
+	enemyShips.erase(std::remove_if(enemyShips.begin(), enemyShips.end(), [](const std::unique_ptr<Ship>& ship) {
+		return ship->shouldRemove();
+	}),
+	enemyShips.end());
+
+	drawProjectiles();
+	drawUI();
+
+	checkGameOver();
+
+	return !shouldExit;
+}
+
+bool Game::loop()
+{
+	if (shouldDrawMenu)
+	{
+		return menuLoop();
+	}
+	else
+	{
+		return gameLoop();
+	}
 }

@@ -4,3 +4,4 @@
 #include "Store.h"
 #include "Events.h"
 #include "AssetLoader.h"
+#include "Timer.h"

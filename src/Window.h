@@ -20,7 +20,7 @@ class Window
 	void (*onresize)(void);
 	Events events;
 
-	std::unique_ptr<SDL_Texture, SDL_Deleter>& getTextTexture(const std::string& text, const int x, const int y, const int sz, const SDL_Color& color);
+	SDL_Texture* getTextTexture(const std::string& text, const int x, const int y, const int sz, const SDL_Color& color);
 	SDL_Texture* getEmptyTexture(int w, int h);
 	void onResize(int w, int h);
 	void clear();
@@ -41,7 +41,10 @@ class Window
 	int globalAlpha;
 	Uint32 colorkey;
 
-	Window(const std::string& title = "SDL2Wrapper", int widthA = 800, int heightA = 600);
+	static const double targetFrameMS;
+
+	Window();
+	Window(const std::string& title, int widthA, int heightA);
 	~Window();
 
 	Events& getEvents();

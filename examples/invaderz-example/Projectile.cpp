@@ -15,6 +15,24 @@ Projectile::Projectile(Game& gameA, const std::string& spriteBaseA, const int al
 	{
 		setVy(-speed);
 	}
+
+	if (spriteBase == "goodLazer")
+	{
+		type = "player";
+	}
+	else if (spriteBase == "badLazer")
+	{
+		type = "enemy";
+	}
+	else if (spriteBase == "badLazer2")
+	{
+		type = "enemy2";
+	}
+}
+
+const std::string& Projectile::getType() const
+{
+	return type;
 }
 
 void Projectile::onCollision(Ship& ship)

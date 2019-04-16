@@ -13,8 +13,7 @@ Actor::Actor(Game& gameA, const std::string& spriteBaseA)
 
 Actor::~Actor()
 {
-	if (spriteBase == "badShip")
-		std::cout << "DELETE ACTOR: " << spriteBase << std::endl;
+	anims.clear();
 }
 
 void Actor::set(const double xA, const double yA)
@@ -59,6 +58,11 @@ const bool Actor::shouldRemove() const
 	return removeFlag;
 }
 
+void Actor::addBoolTimer(const int maxFrames, bool& ref)
+{
+	timers.push_back(std::make_unique<SDL2Wrapper::BoolTimer>(game.window, maxFrames, ref));
+}
+
 void Actor::onCollision(Projectile& proj)
 {
 }
@@ -70,6 +74,16 @@ void Actor::update()
 	double frameRatio = game.window.getFrameRatio();
 	x += vx * frameRatio;
 	y += vy * frameRatio;
+
+	for (auto it = timers.begin(); it != timers.end(); ++it)
+	{
+		SDL2Wrapper::Timer& timer = **it;
+		timer.update();
+		if (timer.shouldRemove())
+		{
+			timers.erase(it--);
+		}
+	}
 }
 
 void Actor::draw()

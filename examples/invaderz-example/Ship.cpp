@@ -18,25 +18,72 @@ Ship::~Ship()
 
 void Ship::onCollision(Projectile& proj)
 {
-	if (!isExploding() && proj.allegiance != allegiance)
+	if (isExploding() || proj.allegiance == allegiance)
 	{
-		hp -= 1;
-		if (hp <= 0)
+		return;
+	}
+
+	const std::string& projType = proj.getType();
+	if (allegiance == PLAYER)
+	{
+		if (projType == "enemy")
 		{
-			setAnimState("explosion");
-			game.addBoolTimer(28, removeFlag);
-			setV(0.0, 0.0);
-			game.modifyScore(GameOptions.pointsPerDestroyedShip);
-			game.spawnEnemyShips(1);
+			hp -= GameOptions.enemyProjDamage;
 		}
-		else
+		else if (projType == "enemy2")
 		{
-			setAnimState("damaged");
-			shouldSwitchToDefaultState = false;
-			game.addBoolTimer(40, shouldSwitchToDefaultState);
+			hp -= GameOptions.enemyProjDamage2;
 		}
 	}
+	else
+	{
+		hp -= GameOptions.playerProjDamage;
+	}
+
+	if (hp <= 0)
+	{
+		timers.clear();
+		setAnimState("explosion");
+		addBoolTimer(28, removeFlag);
+		setV(vx / 2.0, vy / 2);
+		if (allegiance == ENEMY)
+		{
+			game.modifyScore(GameOptions.pointsPerDestroyedShip);
+			game.spawnEnemyShips(2);
+		}
+	}
+	else
+	{
+		setAnimState("damaged");
+		shouldSwitchToDefaultState = false;
+		addBoolTimer(40, shouldSwitchToDefaultState);
+	}
 }
+
+void Ship::onCollision(Ship& ship)
+{
+	if (isExploding() || ship.allegiance == allegiance)
+	{
+		return;
+	}
+
+	hp -= GameOptions.shipCollideDamage;
+	if (hp <= 0 || allegiance == ENEMY)
+	{
+		timers.clear();
+	 	setAnimState("explosion");
+		addBoolTimer(28, removeFlag);
+		setV(0.0, 0.0);
+		game.spawnEnemyShips(1);
+	}
+	else if (allegiance == PLAYER)
+	{
+		setAnimState("damaged");
+		shouldSwitchToDefaultState = false;
+		addBoolTimer(40, shouldSwitchToDefaultState);
+	}
+}
+
 
 bool Ship::isExploding() const
 {

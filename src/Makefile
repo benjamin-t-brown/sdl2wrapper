@@ -1,4 +1,4 @@
-CODE=SDL2Includes.cpp Sprite.cpp Events.cpp Animation.cpp Store.cpp AssetLoader.cpp Window.cpp
+CODE=SDL2Includes.cpp Sprite.cpp Events.cpp Animation.cpp Store.cpp AssetLoader.cpp Timer.cpp Window.cpp
 SRC=$(CODE:.cpp=.o)
 FLAGS=-g -Wall -std=c++17
 LIB=libSDL2Wrapper.a

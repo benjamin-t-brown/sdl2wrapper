@@ -15,8 +15,8 @@ struct Sprite
 	const int cy;
 	const int cw;
 	const int ch;
-	const std::unique_ptr<SDL_Texture, SDL_Deleter>& image;
-	Sprite(const std::string& nameA, const int cxA, const int cyA, const int cwA, const int chA, const std::unique_ptr<SDL_Texture, SDL_Deleter>& imageA);
+	SDL_Texture* image;
+	Sprite(const std::string& nameA, const int cxA, const int cyA, const int cwA, const int chA, SDL_Texture* imageA);
 };
 
 } // namespace SDL2Wrapper

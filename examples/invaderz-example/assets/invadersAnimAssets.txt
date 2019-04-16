@@ -66,3 +66,4 @@ explosion_1 7
 explosion_2 7
 explosion_3 7
 explosion_4 7
+invisible_0 7

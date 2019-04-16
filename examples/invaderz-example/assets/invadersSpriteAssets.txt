@@ -9,3 +9,4 @@ SpriteList,healthPickup,3,32,32
 SpriteList,healthBar,1,32,32
 SpriteList,explosion,5,32,32
 SpriteList,starsBg,3,32,32
+SpriteList,invisible,1,32,32

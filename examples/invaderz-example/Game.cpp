@@ -40,6 +40,7 @@ void Game::initPlayer()
 	playerShip->set(width / 2, height - GameOptions.spriteSize * 2);
 	playerShip->hp = GameOptions.playerShipHP;
 	playerShip->setAnimState("default");
+	playerMayFire = true;
 }
 
 void Game::initWorld()
@@ -59,6 +60,7 @@ void Game::initWorld()
 
 	enemyShips.clear();
 	spawnEnemyShips(2);
+	projectiles.clear();
 }
 
 void Game::enableMenu()
@@ -66,8 +68,8 @@ void Game::enableMenu()
 	shouldDrawMenu = true;
 	SDL2Wrapper::Events& events = window.getEvents();
 	events.pushRoute();
-
 	events.setKeyboardEvent("keydown", std::bind(&Game::handleKeyMenu, this, std::placeholders::_1));
+	projectiles.clear();
 }
 
 void Game::disableMenu()
@@ -139,12 +141,10 @@ void Game::modifyScore(const int value)
 
 void Game::handleKeyDown(const std::string& key)
 {
-	//std::cout << "KEYDOWN: " << key << std::endl;
 }
 
 void Game::handleKeyUp(const std::string& key)
 {
-	//std::cout << "KEYDOWN: " << key << std::endl;
 }
 
 void Game::handleKeyUpdate()
@@ -313,6 +313,11 @@ void Game::drawEnemyShips()
 			ship.setVy(-ship.vy);
 		}
 	}
+
+	enemyShips.erase(std::remove_if(enemyShips.begin(), enemyShips.end(), [](const std::unique_ptr<Ship>& ship) {
+		return ship->shouldRemove();
+	}),
+	enemyShips.end());
 }
 
 void Game::drawProjectiles()
@@ -342,19 +347,15 @@ bool Game::menuLoop()
 
 bool Game::gameLoop()
 {
-	drawStars();
 	handleKeyUpdate();
+
+	drawStars();
 
 	playerShip->update();
 	checkCollisions(*playerShip);
 	playerShip->draw();
 
 	drawEnemyShips();
-	enemyShips.erase(std::remove_if(enemyShips.begin(), enemyShips.end(), [](const std::unique_ptr<Ship>& ship) {
-		return ship->shouldRemove();
-	}),
-	enemyShips.end());
-
 	drawProjectiles();
 	drawUI();
 

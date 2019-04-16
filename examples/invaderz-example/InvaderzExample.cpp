@@ -19,9 +19,9 @@ int main(int argc, char* argv[])
 		SDL2Wrapper::Window window("Invaders Example", GameOptions.width, GameOptions.height);
 		Game game(window);
 
-		// SDL2Wrapper::Store::logFonts();
-		// SDL2Wrapper::Store::logSprites();
-		// SDL2Wrapper::Store::logAnimationDefinitions();
+		SDL2Wrapper::Store::logFonts();
+		SDL2Wrapper::Store::logSprites();
+		SDL2Wrapper::Store::logAnimationDefinitions();
 		window.startRenderLoop([&]() { return game.loop(); });
 
 		std::cout << "[SDL2Wrapper] Program End." << std::endl;

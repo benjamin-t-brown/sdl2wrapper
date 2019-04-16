@@ -238,6 +238,7 @@ void Window::startRenderLoop(std::function<bool(void)> cb)
 
 		SDL_RenderClear(renderer.get());
 		loop = cb();
+		events.update();
 		SDL_RenderPresent(renderer.get());
 		firstLoop = false;
 	}

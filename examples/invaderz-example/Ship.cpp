@@ -108,4 +108,12 @@ void Ship::update()
 	{
 		x = 0;
 	}
+	if (y > game.height)
+	{
+		y = game.height;
+	}
+	else if (y < 0)
+	{
+		y = 0;
+	}
 }

@@ -14,13 +14,14 @@ const float distance(const int x1, const int y1, const int x2, const int y2)
 }
 
 Game::Game(SDL2Wrapper::Window& windowA)
-	: shouldDrawMenu(true), shouldExit(false), score(0), window(windowA), width(GameOptions.width), height(GameOptions.height), playerMayFire(true), enemyFireRate(GameOptions.enemyFireRate)
+	: shouldDrawMenu(true), shouldExit(false), shouldPlayHiscoreSound(false), score(0), lastScore(0), window(windowA), width(GameOptions.width), height(GameOptions.height), playerMayFire(true), enemyFireRate(GameOptions.enemyFireRate)
 {
 	SDL2Wrapper::Store::createFont("default", "assets/monofonto.ttf");
 	window.setCurrentFont("default", 18);
 
-	SDL2Wrapper::loadAssetsFromFile<SDL2Wrapper::Sprite>("assets/invadersSpriteAssets.txt");
-	SDL2Wrapper::loadAssetsFromFile<SDL2Wrapper::Animation>("assets/invadersAnimAssets.txt");
+	SDL2Wrapper::loadAssetsFromFile("sprite", "assets/invaderzSpriteAssets.txt");
+	SDL2Wrapper::loadAssetsFromFile("animation", "assets/invaderzAnimAssets.txt");
+	SDL2Wrapper::loadAssetsFromFile("sound", "assets/invaderzSoundAssets.txt");
 
 	SDL2Wrapper::Events& events = window.getEvents();
 	events.setKeyboardEvent("keydown", std::bind(&Game::handleKeyDown, this, std::placeholders::_1));
@@ -46,7 +47,6 @@ void Game::initPlayer()
 void Game::initWorld()
 {
 	score = 0;
-
 	if (!background.size())
 	{
 		for (int i = 0; i < height; i += GameOptions.spriteSize)
@@ -70,6 +70,7 @@ void Game::enableMenu()
 	events.pushRoute();
 	events.setKeyboardEvent("keydown", std::bind(&Game::handleKeyMenu, this, std::placeholders::_1));
 	projectiles.clear();
+	window.playMusic("menu");
 }
 
 void Game::disableMenu()
@@ -77,6 +78,8 @@ void Game::disableMenu()
 	shouldDrawMenu = false;
 	SDL2Wrapper::Events& events = window.getEvents();
 	events.popRouteNextTick();
+	window.stopMusic();
+	window.playSound("begin");
 }
 
 void Game::spawnEnemyShips(const int amount)
@@ -113,11 +116,13 @@ void Game::addProjectile(const std::string& type, const int x, const int y)
 	{
 		projectiles.push_back(std::make_unique<Projectile>(*this, "goodLazer", 0, GameOptions.playerProjSpeed, GameOptions.playerProjDamage));
 		projectiles.back()->set(x, y);
+		window.playSound("lazer");
 	}
 	else if (type == "bad")
 	{
 		projectiles.push_back(std::make_unique<Projectile>(*this, "badLazer", 1, GameOptions.enemyProjSpeed, GameOptions.enemyProjDamage));
 		projectiles.back()->set(x, y);
+		window.playSound("lazer2");
 	}
 	else if (type == "bad2")
 	{
@@ -234,8 +239,15 @@ void Game::checkGameOver()
 {
 	if (playerShip->isExploding())
 	{
+		window.playSound("end");
+		addBoolTimer(60, shouldPlayHiscoreSound);
 		enableMenu();
 	}
+}
+
+void Game::addBoolTimer(const int maxFrames, bool& ref)
+{
+	timers.push_back(std::make_unique<SDL2Wrapper::BoolTimer>(window, maxFrames, ref));
 }
 
 void Game::drawMenu()
@@ -299,9 +311,12 @@ void Game::drawEnemyShips()
 		ship.update();
 		ship.draw();
 		checkCollisions(ship);
-		if (rand() % enemyFireRate == 1)
+		if (!shouldDrawMenu)
 		{
-			addProjectile("bad", ship.x, ship.y);
+			if (rand() % enemyFireRate == 1)
+			{
+				addProjectile("bad", ship.x, ship.y);
+			}
 		}
 
 		if (ship.x <= 0.0 || ship.x >= static_cast<double>(width))
@@ -366,6 +381,22 @@ bool Game::gameLoop()
 
 bool Game::loop()
 {
+	for (auto it = timers.begin(); it != timers.end(); ++it)
+	{
+		SDL2Wrapper::Timer& timer = **it;
+		timer.update();
+		if (timer.shouldRemove())
+		{
+			timers.erase(it--);
+		}
+	}
+
+	if (shouldPlayHiscoreSound)
+	{
+		shouldPlayHiscoreSound = false;
+		window.playSound("hiscore");
+	}
+
 	if (shouldDrawMenu)
 	{
 		return menuLoop();

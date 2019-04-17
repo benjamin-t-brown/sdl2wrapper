@@ -8,6 +8,8 @@ std::unordered_map<std::string, std::unique_ptr<SDL_Texture, SDL_Deleter>> Store
 std::unordered_map<std::string, std::unique_ptr<Sprite>> Store::sprites;
 std::unordered_map<std::string, std::unique_ptr<AnimationDefinition>> Store::anims;
 std::unordered_map<std::string, std::unique_ptr<TTF_Font, SDL_Deleter>> Store::fonts;
+std::unordered_map<std::string, std::unique_ptr<Mix_Chunk, SDL_Deleter>> Store::sounds;
+std::unordered_map<std::string, std::unique_ptr<Mix_Music, SDL_Deleter>> Store::musics;
 
 Store::Store()
 {
@@ -70,7 +72,7 @@ void Store::createFont(const std::string& name, const std::string& path)
 		const std::string key = name + std::to_string(size);
 		fonts[key] = std::unique_ptr<TTF_Font, SDL_Deleter>(TTF_OpenFont(path.c_str(), size));
 
-		if (fonts[key].get() == nullptr)
+		if (!fonts[key])
 		{
 			throw std::string("[SDL2Wrapper] ERROR Failed to load font '" + path + "': reason= " + std::string(SDL_GetError()));
 		}
@@ -96,9 +98,16 @@ void Store::createSprite(const std::string& name, SDL_Texture* tex)
 
 void Store::createSprite(const std::string& name, const std::string& textureName, const int x, const int y, const int w, const int h)
 {
-	SDL_Texture* tex = getTexture(textureName);
-	SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-	sprites[name] = std::make_unique<Sprite>(name, x, y, w, h, tex);
+	if (sprites.find(name) == sprites.end())
+	{
+		SDL_Texture* tex = getTexture(textureName);
+		SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+		sprites[name] = std::make_unique<Sprite>(name, x, y, w, h, tex);
+	}
+	else
+	{
+		std::cout << "[SDL2Wrapper] WARNING Sprite with name '" << name << "' already exists. '" << name << "'" << std::endl;
+	}
 }
 
 AnimationDefinition& Store::createAnimationDefinition(const std::string& name, const bool loop)
@@ -112,6 +121,36 @@ AnimationDefinition& Store::createAnimationDefinition(const std::string& name, c
 		std::cout << "[SDL2Wrapper] WARNING Cannot create new anim, it already exists: '" + name + "'" << std::endl;
 	}
 	return *anims[name];
+}
+void Store::createSound(const std::string& name, const std::string& path)
+{
+	if (sounds.find(name) == sounds.end())
+	{
+		sounds[name] = std::unique_ptr<Mix_Chunk, SDL_Deleter>(Mix_LoadWAV(path.c_str()), SDL_Deleter());
+		if (!sounds[name])
+		{
+			throw std::string("[SDL2Wrapper] ERROR Failed to load sound '" + path + "': reason= " + std::string(Mix_GetError()));
+		}
+	}
+	else
+	{
+		std::cout << "[SDL2Wrapper] WARNING Sound with name '" << name << "' already exists. '" << name << "'" << std::endl;
+	}
+}
+void Store::createMusic(const std::string& name, const std::string& path)
+{
+	if (musics.find(name) == musics.end())
+	{
+		musics[name] = std::unique_ptr<Mix_Music, SDL_Deleter>(Mix_LoadMUS(path.c_str()), SDL_Deleter());
+		if (!musics[name])
+		{
+			throw std::string("[SDL2Wrapper] ERROR Failed to load music '" + path + "': reason= " + std::string(Mix_GetError()));
+		}
+	}
+	else
+	{
+		std::cout << "[SDL2Wrapper] WARNING Music with name '" << name << "' already exists. '" << name << "'" << std::endl;
+	}
 }
 
 void Store::logSprites()
@@ -207,6 +246,31 @@ TTF_Font* Store::getFont(const std::string& name, const int sz, const bool isOut
 	}
 }
 
+Mix_Chunk* Store::getSound(const std::string& name)
+{
+	auto pair = sounds.find(name);
+	if (pair != sounds.end())
+	{
+		return pair->second.get();
+	}
+	else
+	{
+		throw std::string("[SDL2Wrapper] ERROR Cannot get sound '" + name + "' because it has not been loaded.");
+	}
+}
+Mix_Music* Store::getMusic(const std::string& name)
+{
+	auto pair = musics.find(name);
+	if (pair != musics.end())
+	{
+		return pair->second.get();
+	}
+	else
+	{
+		throw std::string("[SDL2Wrapper] ERROR Cannot get music '" + name + "' because it has not been loaded.");
+	}
+}
+
 void Store::clear()
 {
 	textures.clear();
@@ -214,6 +278,8 @@ void Store::clear()
 	sprites.clear();
 	anims.clear();
 	fonts.clear();
+	sounds.clear();
+	musics.clear();
 }
 
 } // namespace SDL2Wrapper

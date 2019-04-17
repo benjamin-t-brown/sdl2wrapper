@@ -31,6 +31,8 @@ class Window
 	int currentFontSize;
 	double deltaTime;
 	
+	bool isSoundEnabled;
+
 	static int instanceCount;
 
   public:
@@ -57,6 +59,12 @@ class Window
 	void setAnimationFromDefinition(const std::string& name, Animation& anim) const;
 
 	const SDL_Color makeColor(Uint8 r, Uint8 g, Uint8 b) const;
+
+	void disableSound();
+	void enableSound();
+	void playSound(const std::string& name);
+	void playMusic(const std::string& name);
+	void stopMusic();
 
 	void drawSprite(const std::string& name, const int x, const int y, const bool centered = true);
 	void drawAnimation(Animation& anim, const int x, const int y, const bool centered = true, const bool updateAnim = true);

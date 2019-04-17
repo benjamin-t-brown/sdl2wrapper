@@ -132,8 +132,7 @@ int getLineFromStream(std::istream& is)
 	return lineCount;
 }
 
-template <>
-void loadAssetsFromFile<Sprite>(const std::string& path)
+void loadSpriteAssetsFromFile(const std::string& path)
 {
 	std::fstream ifs(path);
 	if (!ifs)
@@ -196,8 +195,8 @@ void loadAssetsFromFile<Sprite>(const std::string& path)
 		std::cout << " LINE: " << getLineFromStream(ifs) << std::endl;
 	}
 }
-template <>
-void loadAssetsFromFile<Animation>(const std::string& path)
+
+void loadAnimationAssetsFromFile(const std::string& path)
 {
 	std::fstream ifs(path);
 	if (!ifs)
@@ -246,8 +245,61 @@ void loadAssetsFromFile<Animation>(const std::string& path)
 	}
 	catch (std::exception& e)
 	{
-		std::cout << "[SDL2Wrapper] ERROR Failed to parse image list: " << e.what() << std::endl;
+		std::cout << "[SDL2Wrapper] ERROR Failed to parse anim list: " << e.what() << std::endl;
 		std::cout << " LINE: " << getLineFromStream(ifs) << std::endl;
+	}
+}
+
+void loadSoundAssetsFromFile(const std::string& path)
+{
+	std::fstream ifs(path);
+	if (!ifs)
+	{
+		std::cout << "[SDL2Wrapper] ERROR Cannot load sound/music list: " + path << std::endl;
+		return;
+	}
+
+	try
+	{
+		std::string line;
+		while (std::getline(ifs, line))
+		{
+			if (line.size())
+			{
+				line = trim(line);
+				std::vector<std::string> arr;
+				split(line, ",", arr);
+				if (arr[0] == "Sound")
+				{
+					Store::createSound(arr[1], arr[2]);
+				}
+				else if (arr[0] == "Music")
+				{
+					Store::createMusic(arr[1], arr[2]);
+				}
+			}
+		}
+	}
+	catch (std::exception& e)
+	{
+		std::cout << "[SDL2Wrapper] ERROR Failed to parse sound/music list: " << e.what() << std::endl;
+		std::cout << " LINE: " << getLineFromStream(ifs) << std::endl;
+	}
+}
+
+void loadAssetsFromFile(const std::string& type, const std::string& path)
+{
+	if (type == "sprite")
+	{
+		loadSpriteAssetsFromFile(path);
+	}
+	else if (type == "animation")
+	{
+		loadAnimationAssetsFromFile(path);
+	}
+	else if (type == "sound")
+	{
+		loadSoundAssetsFromFile(path);
 	}
 }
 } // namespace SDL2Wrapper

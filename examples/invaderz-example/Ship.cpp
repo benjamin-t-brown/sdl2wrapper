@@ -51,9 +51,18 @@ void Ship::onCollision(Projectile& proj)
 			game.modifyScore(GameOptions.pointsPerDestroyedShip);
 			game.spawnEnemyShips(2);
 		}
+		game.window.playSound("explosion");
 	}
 	else
 	{
+		if (allegiance == ENEMY)
+		{
+			game.window.playSound("damagedEnemy");
+		}
+		else
+		{
+			game.window.playSound("damaged");
+		}
 		setAnimState("damaged");
 		shouldSwitchToDefaultState = false;
 		addBoolTimer(40, shouldSwitchToDefaultState);
@@ -75,9 +84,11 @@ void Ship::onCollision(Ship& ship)
 		addBoolTimer(28, removeFlag);
 		setV(0.0, 0.0);
 		game.spawnEnemyShips(1);
+		game.window.playSound("explosion");
 	}
 	else if (allegiance == PLAYER)
 	{
+		game.window.playSound("damaged");
 		setAnimState("damaged");
 		shouldSwitchToDefaultState = false;
 		addBoolTimer(40, shouldSwitchToDefaultState);

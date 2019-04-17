@@ -7,12 +7,12 @@ namespace SDL2Wrapper
 int Window::instanceCount = 0;
 const double Window::targetFrameMS = 16.66666;
 
-Window::Window() : events(*this)
+Window::Window()
+	: events(*this)
 {
-
 }
 Window::Window(const std::string& title, int widthA, int heightA)
-	: events(*this), currentFontSize(18), deltaTime(0), globalAlpha(255)
+	: events(*this), currentFontSize(18), deltaTime(0), isSoundEnabled(true), globalAlpha(255)
 {
 	Window::instanceCount++;
 	createWindow(title, widthA, heightA);
@@ -24,6 +24,7 @@ Window::~Window()
 	if (Window::instanceCount == 0)
 	{
 		Store::clear();
+		Mix_Quit();
 		IMG_Quit();
 		TTF_Quit();
 		SDL_Quit();
@@ -33,7 +34,6 @@ Window::~Window()
 void Window::createWindow(const std::string& title, const int w, const int h)
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
-	//IMG_Init(IMG_INIT_PNG);
 	colorkey = 0x00FFFFFF;
 	width = w;
 	height = h;
@@ -46,13 +46,18 @@ void Window::createWindow(const std::string& title, const int w, const int h)
 		SDL_Deleter());
 	if (window == NULL)
 	{
-		throw std::runtime_error("[SDL2Wrapper] ERROR Window could not be created! SDL Error: " + std::string(SDL_GetError()));
+		throw std::string("[SDL2Wrapper] ERROR Window could not be created! SDL Error: " + std::string(SDL_GetError()));
 	}
 
 	renderer = std::unique_ptr<SDL_Renderer, SDL_Deleter>(
 		SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE),
 		SDL_Deleter());
 	SDL_SetRenderDrawColor(renderer.get(), 0x55, 0x55, 0x55, 0xFF);
+
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+	{
+		throw std::string("[SDL2Wrapper] ERROR SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+	}
 
 	Store::setRenderer(renderer);
 }
@@ -94,6 +99,51 @@ const SDL_Color Window::makeColor(Uint8 r, Uint8 g, Uint8 b) const
 {
 	SDL_Color c = {r, g, b};
 	return c;
+}
+
+void Window::disableSound()
+{
+	isSoundEnabled = false;
+}
+void Window::enableSound()
+{
+	isSoundEnabled = true;
+}
+void Window::playSound(const std::string& name)
+{
+	if (!isSoundEnabled)
+	{
+		return;
+	}
+
+	Mix_Chunk* sound = Store::getSound(name);
+	Mix_PlayChannel(-1, sound, 0);
+}
+void Window::playMusic(const std::string& name)
+{
+	if (!isSoundEnabled)
+	{
+		return;
+	}
+
+	Mix_Music* music = Store::getMusic(name);
+	if (Mix_PlayingMusic())
+	{
+		stopMusic();
+	}
+	Mix_PlayMusic(music, -1);
+}
+void Window::stopMusic()
+{
+	if (!isSoundEnabled)
+	{
+		return;
+	}
+
+	if (Mix_PlayingMusic())
+	{
+		Mix_HaltMusic();
+	}
 }
 
 SDL_Texture* Window::getTextTexture(const std::string& text, const int x, const int y, const int sz, const SDL_Color& color)
@@ -182,7 +232,8 @@ void Window::startRenderLoop(std::function<bool(void)> cb)
 	while (loop)
 	{
 		freq = (double)SDL_GetPerformanceFrequency();
-		if (!freq) {
+		if (!freq)
+		{
 			freq = 1;
 		}
 		last = now;

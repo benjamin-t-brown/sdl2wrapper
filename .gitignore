@@ -6,3 +6,4 @@ lib/*
 .gitignore~
 examples/EventsExample
 examples/SimpleExample
+dlls/*

@@ -4,6 +4,5 @@
 
 namespace SDL2Wrapper
 {
-template <typename A>
-void loadAssetsFromFile(const std::string& path);
+void loadAssetsFromFile(const std::string& type, const std::string& path);
 } // namespace SDL2Wrapper

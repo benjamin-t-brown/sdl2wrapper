@@ -24,4 +24,14 @@ void SDL_Deleter::operator()(TTF_Font* p) const
 	if (p != nullptr)
 		TTF_CloseFont(p);
 }
+void SDL_Deleter::operator()(Mix_Chunk* p) const
+{
+	if (p != nullptr)
+		Mix_FreeChunk(p);
+}
+void SDL_Deleter::operator()(Mix_Music* p) const
+{
+	if (p != nullptr)
+		Mix_FreeMusic(p);
+}
 } // namespace SDL2Wrapper
